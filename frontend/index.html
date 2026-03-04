@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Threat Hub</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <i class="fa-solid fa-cloud" style="font-size: 1.5rem; color: var(--accent); margin-right: 12px;"></i>
+      <span>Cyber Threat Hub</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item active" data-target="view-dashboard">
+        <i class="fa-solid fa-chart-line"></i>
+        <span>Dashboard</span>
+      </a>
+      <a class="nav-item" data-target="view-news">
+        <i class="fa-regular fa-newspaper"></i>
+        <span>CyberSec News</span>
+      </a>
+      <a class="nav-item" data-target="view-threats">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>Threat Feed</span>
+      </a>
+      <a class="nav-item" data-target="view-cves">
+        <i class="fa-solid fa-shield-virus"></i>
+        <span>Vulnerabilidades</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <p>Cyber Threat Hub v1.0.0</p>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-wrapper">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-title">
+      </div>
+      <div class="topbar-actions">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Pesquisar...">
+        </div>
+        <div class="live-indicator">
+          <span class="live-dot"></span> AO VIVO
+        </div>
+        <div class="notification-dropdown" id="notif-dropdown">
+          <button class="icon-btn" id="bell-btn"><i class="fa-regular fa-bell"></i><span class="badge-dot" id="bell-badge" style="display:none;"></span></button>
+          <div class="dropdown-menu" id="notif-menu">
+            <div class="dropdown-header">
+              <span>Notificações</span>
+              <button id="clear-notifs" class="clear-btn" title="Limpar todas"><i class="fa-solid fa-trash-can"></i></button>
+            </div>
+            <div class="dropdown-list" id="notif-list">
+              <p class="text-muted empty-notifs" style="padding:24px;text-align:center;">Nenhuma nova notificação</p>
+            </div>
+          </div>
+        </div>
+        <button class="icon-btn"><i class="fa-solid fa-gear"></i></button>
+        <button class="icon-btn primary"><i class="fa-regular fa-user"></i></button>
+      </div>
+    </header>
+
+    <!-- Content Area -->
+    <div class="content-area">
+
+      <!-- Global Loader -->
+      <div id="global-loader" class="loader">
+        <div class="loader-spinner"></div>
+      </div>
+
+      <!-- View: Dashboard -->
+      <section id="view-dashboard" class="view active">
+        <!-- BR Threat Banner -->
+        <div id="br-threat-banner" class="br-banner" style="display: none;">
+          <div class="br-banner-icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <div class="br-banner-content">
+            <h4 id="br-banner-title" class="br-banner-title">🚨 Alerta Crítico: Nova ameaça detectada</h4>
+            <p id="br-banner-desc" class="br-banner-desc">Uma nova ameaça está ativa.</p>
+            <a href="#" id="br-banner-link" class="br-banner-link">Saiba mais <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+          </div>
+          <button class="br-banner-close" id="br-banner-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- Dashboard Cards -->
+        <div class="grid-cards-new" id="dashboard-cards">
+          <!-- Injetado via JS -->
+        </div>
+
+        <!-- Dashboard Charts Top -->
+        <div class="grid-charts-top">
+          <div class="chart-container large">
+            <div class="chart-header">Distribuição por Tipo de Ameaça</div>
+            <div class="chart-wrapper">
+              <canvas id="entityDistChart"></canvas>
+            </div>
+          </div>
+          <div class="chart-container side">
+            <div class="chart-header">Tipos de Ataques</div>
+            <div class="chart-wrapper">
+              <canvas id="attackTypesChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard Charts Bottom -->
+        <div class="chart-container full-width">
+          <div class="chart-header">Linha do Tempo de Incidentes</div>
+          <div class="chart-wrapper" style="height: 200px;">
+            <canvas id="incidentTimelineChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Dashboard Tables -->
+        <div class="dashboard-tables-grid">
+          <div class="table-container">
+            <div class="chart-header">Ameaças Recentes</div>
+            <table class="data-table" id="recent-threats-table">
+              <thead>
+                <tr>
+                  <th>Ameaça</th>
+                  <th>Alvo</th>
+                  <th>Severidade</th>
+                  <th>Data</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Injetado via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="table-container side-table">
+            <div class="chart-header" style="text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px;">Active
+              Vulnerabilities</div>
+            <div class="vuln-list" id="active-vulns-list">
+              <!-- Injetado via JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- View: News -->
+      <section id="view-news" class="view">
+        <div>
+          <h2>CyberSecurity News</h2>
+          <p class="text-muted">Agregador em tempo real de notícias sobre segurança da informação</p>
+        </div>
+
+        <div class="controls-bar">
+          <input type="text" id="news-search" placeholder="Pesquisar notícias..." class="input-field">
+        </div>
+
+        <div class="grid-news" id="news-container">
+          <!-- Injetado via JS -->
+        </div>
+      </section>
+
+      <!-- View: Threats -->
+      <section id="view-threats" class="view">
+        <div>
+          <h2>Threat Feed</h2>
+          <p class="text-muted">Monitoramento de alertas e campanhas maliciosas recentes</p>
+        </div>
+
+        <div class="controls-bar">
+          <input type="text" id="threats-search" placeholder="Pesquisar por vítima ou grupo..." class="input-field">
+        </div>
+
+        <div class="data-list" id="threats-container">
+          <!-- Injetado via JS -->
+        </div>
+      </section>
+
+      <!-- View: CVEs -->
+      <section id="view-cves" class="view">
+        <div>
+          <h2>Vulnerabilidades</h2>
+          <p class="text-muted">Acompanhamento das vulnerabilidades mais recentes e análises de impacto</p>
+        </div>
+
+        <div class="controls-bar">
+          <input type="text" id="cves-search" placeholder="Pesquisar CVE ID..." class="input-field">
+        </div>
+
+        <div class="data-list" id="cves-container">
+          <!-- Injetado via JS -->
+        </div>
+      </section>
+
+    </div>
+    <!-- Slide-out Reading Panel -->
+    <div id="side-panel" class="side-panel">
+      <button class="close-btn" id="close-panel"><i class="fa-solid fa-xmark"></i></button>
+      <div id="panel-content">
+        <!-- Injetado via JS -->
+      </div>
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+
+</html>
