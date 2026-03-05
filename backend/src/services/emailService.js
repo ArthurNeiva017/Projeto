@@ -34,7 +34,7 @@ O evento foi detectado a partir de fontes públicas de inteligência de ameaças
 
 👾 Grupo de Ransomware: ${attack.grupo}
 🏢 Organização Vítima: ${attack.vitima}
-📅 Data da Detecção: ${formatDate(item.data_incidente)}
+📅 Data da Detecção: ${formatDate(attack.data_incidente)}
 🌏 País: Brasil
 
 🔎 Fonte do Incidente:
