@@ -12,6 +12,7 @@ function formatDate(dateString) {
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.ethereal.email',
     port: process.env.SMTP_PORT || 587,
+    family: 4, // Força o uso do IPv4 invés do IPv6 do Render (que causa ENETUNREACH)
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
