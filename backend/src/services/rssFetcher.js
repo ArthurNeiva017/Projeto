@@ -20,7 +20,19 @@ async function updateNewsFromRSS() {
 
     for (const feed of FEEDS) {
         try {
-            const feedData = await parser.parseURL(feed.url);
+            // Fetch XML first to sanitize it before parsing
+            const response = await axios.get(feed.url, {
+                timeout: 15000,
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': 'application/rss+xml, application/xml, text/xml'
+                }
+            });
+            let xmlData = response.data;
+            // Fix unescaped ampersands that cause "Invalid character in entity name" errors
+            xmlData = xmlData.replace(/&(?!(?:apos|quot|[a-zA-Z0-9]+|#\d+);)/g, '&amp;');
+
+            const feedData = await parser.parseString(xmlData);
 
             // Get only the 5 most recent from each feed to prevent database bloat
             const recentItems = feedData.items.slice(0, 5);
