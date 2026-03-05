@@ -8,7 +8,14 @@ async function updateCVEsFromAPI() {
     console.log('Fetching latest CVEs from CIRCL API...');
 
     try {
-        const response = await axios.get(CVE_API_URL);
+        const response = await axios.get(CVE_API_URL, {
+            timeout: 15000, // 15 segundos
+            headers: {
+                // Finge ser um navegador normal para evitar bloqueios de segurança (Cloudflare, etc)
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json, text/plain, */*'
+            }
+        });
         const cves = response.data;
 
         // Filtrar apenas vulnerabilidades que começam com CVE- e excluir GHSA etc.

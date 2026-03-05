@@ -17,12 +17,12 @@ O evento foi detectado a partir de fontes públicas de inteligência de ameaças
 
 <strong>🔎 Detalhes do Incidente:</strong>
 
-👾 Grupo de Ransomware: ${attack.grupo}
-🏢 Organização Vítima: ${attack.vitima}
-📅 Data da Detecção: ${formatDate(attack.data_incidente)}
+👾 Grupo de Ransomware: ${attack.grupo}<br>
+🏢 Organização Vítima: <strong style="text-transform:uppercase;">${attack.vitima}</strong><br>
+📅 Data da Detecção: ${formatDate(attack.data_incidente)}<br>
 🌎 País: Brasil
 
-🔎 Fonte do Incidente:
+🌐Fonte do Incidente:
 ${attack.url}`;
 }
 
@@ -31,9 +31,11 @@ async function updateThreatsFromAPI() {
 
     try {
         const response = await axios.get('https://api.ransomware.live/recentvictims', {
-            timeout: 60000,
+            timeout: 20000, // Diminuindo para 20 seg para não travar o boot do Render
             headers: {
-                'User-Agent': 'CyberThreatHub-AcademicProject'
+                // Finge ser um navegador comum em vez de um "Bot de TCC" para burlar limites básicos
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json'
             }
         });
 

@@ -29,11 +29,11 @@ A plataforma Cyber Threat Hub identificou um novo incidente de ransomware envolv
 
 O evento foi detectado a partir de fontes públicas de inteligência de ameaças e pode indicar atividade recente de grupos de ransomware atuando na região.
 
-Detalhes do Incidente:
+🔎 Detalhes do Incidente:
 
 👾 Grupo de Ransomware: ${attack.grupo}
 🏢 Organização Vítima: ${attack.vitima}
-📅 Data da Detecção: ${formatDate(attack.data_incidente)}
+📅 Data da Detecção: ${formatDate(item.data_incidente)}
 🌏 País: Brasil
 
 🔎 Fonte do Incidente:
