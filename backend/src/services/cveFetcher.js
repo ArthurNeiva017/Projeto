@@ -1,72 +1,63 @@
 const axios = require('axios');
 const db = require('../database/db');
 
-// Utilizando a API pública do CIRCL para buscar as últimas CVEs
-const CVE_API_URL = 'https://cve.circl.lu/api/last';
+// Utilizando o Catálogo Oficial de Vulnerabilidades Exploradas (KEV) da CISA
+// Ele é hospedado em um CDN do governo americano e não bloqueia IPs de Datacenters (Render).
+const CVE_API_URL = 'https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json';
 
 async function updateCVEsFromAPI() {
-    console.log('Fetching latest CVEs from CIRCL API...');
+    console.log('Fetching latest CVEs from CISA KEV Catalog...');
 
     try {
         const response = await axios.get(CVE_API_URL, {
-            timeout: 15000, // 15 segundos
+            timeout: 20000,
             headers: {
-                // Finge ser um navegador normal para evitar bloqueios de segurança (Cloudflare, etc)
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'application/json, text/plain, */*'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json'
             }
         });
-        const cves = response.data;
 
-        // Filtrar apenas vulnerabilidades que começam com CVE- e excluir GHSA etc.
-        const activeCVEs = cves.filter(item => {
-            const id = item.id || (item.cveMetadata && item.cveMetadata.cveId) || "";
-            return id.startsWith('CVE-');
-        });
+        // A CISA retorna um objeto com uma lista "vulnerabilities"
+        const cvesList = response.data.vulnerabilities || [];
 
-        // Pegar apenas as 10 mais recentes para evitar inchaço
-        const recentCVEs = activeCVEs.slice(0, 10);
+        // Ordenar da mais recente adicionada para a mais antiga
+        const sortedCVEs = cvesList.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+
+        // Pegar apenas as 10 mais recentes
+        const recentCVEs = sortedCVEs.slice(0, 10);
 
         for (const item of recentCVEs) {
-            // Extrair ID conforme o formato (suporte a novo e antigo JSON da NVD/CIRCL)
-            const cveId = item.id || (item.cveMetadata && item.cveMetadata.cveId) || `CVE-UNKNOWN-${Math.floor(Math.random() * 1000)}`;
+            const cveId = item.cveID;
 
-            // Verificar se a CVE já existe pelo cve_id
+            // Verificar se a CVE já existe pelo cve_id no nosso banco
             db.get("SELECT id FROM CVE WHERE cve_id = ?", [cveId], (err, row) => {
                 if (!row) {
-                    // Tentar extrair um resumo
-                    let originalSummary = item.summary || 'Descrição detalhada não fornecida pela fonte no momento.';
-                    if (!item.summary && item.containers?.cna?.descriptions?.[0]?.value) {
-                        originalSummary = item.containers.cna.descriptions[0].value;
-                    }
+                    // A CISA Fornece as informações perfeitas para o nosso resumo técnico!
+                    const originalSummary = item.shortDescription || 'Detalhes não informados pela fonte oficial.';
+                    const requiredAction = item.requiredAction || 'Recomenda-se aplicar os patches do fabricante imediatamente.';
 
-                    // Simula uma tradução/simplificação de IA com estrutura "Sobre" e "Recomendação"
+                    // Simula a UI que a gente já usava de "Sobre" e "Recomendação"
                     let aiSummary = `
 <div style="margin-bottom: 16px;">
     <strong style="color: var(--text-bright); display: block; margin-bottom: 6px;"><i class="fa-solid fa-magnifying-glass"></i> Sobre</strong>
-    <p style="line-height: 1.6; text-align: justify; color: var(--text-muted);">A vulnerabilidade crítica <strong>${cveId}</strong> foi recém-descoberta. Detalhes técnicos indicam o seguinte comportamento anômalo ou falha de sistema: ${originalSummary.substring(0, 300)}...</p>
+    <p style="line-height: 1.6; text-align: justify; color: var(--text-muted);">A vulnerabilidade <strong>${cveId}</strong> afetando o produto ${item.vendorProject} ${item.product} foi recém-adicionada ao catálogo de ameaças ativas. Detalhes técnicos indicam: ${originalSummary}</p>
 </div>
 <div>
-    <strong style="color: var(--text-bright); display: block; margin-bottom: 6px;"><i class="fa-solid fa-shield-halved"></i> Recomendação</strong>
-    <p style="line-height: 1.6; text-align: justify; color: var(--text-muted);">Recomenda-se a aplicação imediata de patches de segurança disponibilizados pelo fabricante. Monitore os endpoints afetados e implemente regras de firewall ou IPS preventivas se possível.</p>
+    <strong style="color: var(--text-bright); display: block; margin-bottom: 6px;"><i class="fa-solid fa-shield-halved"></i> Recomendação Oficial (CISA)</strong>
+    <p style="line-height: 1.6; text-align: justify; color: var(--text-muted);">${requiredAction}</p>
 </div>`;
 
                     const insertCVE = db.prepare('INSERT INTO CVE (cve_id, data_publicacao, cvss, resumo, url) VALUES (?, ?, ?, ?, ?)');
 
-                    // Lidar com datas e CVSS
-                    const pubDate = item.Published || (item.cveMetadata && item.cveMetadata.datePublished) || new Date().toISOString();
-
-                    let cvssScore = item.cvss || null;
-                    if (!cvssScore && item.containers?.cna?.metrics?.[0]?.cvssV3_1?.baseScore) {
-                        cvssScore = item.containers.cna.metrics[0].cvssV3_1.baseScore;
-                    }
-
-                    const referenceUrl = (item.references && item.references.length > 0) ? item.references[0] : (item.containers?.cna?.references?.[0]?.url || `https://nvd.nist.gov/vuln/detail/${cveId}`);
+                    // A CISA não lista o CVSS, mas se tá no catálogo de exploits, é crítico.
+                    // Podemos colocar um valor mock alto com base na gravidade do KEV.
+                    const cvssScore = "Exploit Ativo";
+                    const referenceUrl = `https://nvd.nist.gov/vuln/detail/${cveId}`;
 
                     insertCVE.run(
                         cveId,
-                        pubDate,
-                        cvssScore,
+                        item.dateAdded,
+                        null, // Vamos usar null no bd numérico e o front resolve, ou string se a coluna permitir. Originalmente era numérico/texto? O Front renderiza se for null.
                         aiSummary,
                         referenceUrl
                     );
@@ -75,8 +66,9 @@ async function updateCVEsFromAPI() {
             });
         }
     } catch (error) {
-        console.error('Error fetching CVEs from API:', error.message);
+        console.error('Error fetching CVEs from CISA KEV API:', error.message);
     }
 }
 
 module.exports = { updateCVEsFromAPI };
+
